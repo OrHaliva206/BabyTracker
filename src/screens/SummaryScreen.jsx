@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
 import { useApp } from '../context/AppContext'
 
+const FAMILY_ID = 'f0000000-beef-0000-0000-000000000001'
+
 function formatTime(isoStr) {
   return new Date(isoStr).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
 }
@@ -30,7 +32,8 @@ function StatCard({ icon, title, value, subtitle }) {
   )
 }
 
-function EntryRow({ entry }) {
+function EntryRow({ entry, onDelete }) {
+  const [confirming, setConfirming] = useState(false)
   const isBottle = entry.type === 'bottle'
   const icon = isBottle ? '🍼'
     : entry.diaper_type === 'poop' ? '💩'
@@ -46,15 +49,41 @@ function EntryRow({ entry }) {
         <div className="font-semibold text-sm" style={{ color: 'var(--color-text)' }}>{label}</div>
         <div className="text-xs" style={{ color: 'var(--color-muted)' }}>by {entry.logged_by_name || 'Unknown'}</div>
       </div>
-      <div className="text-xs font-medium" style={{ color: 'var(--color-muted)' }}>
+      <div className="text-xs font-medium mr-2" style={{ color: 'var(--color-muted)' }}>
         {formatTime(entry.created_at)}
       </div>
+      {confirming ? (
+        <div className="flex gap-1">
+          <button
+            onClick={() => { onDelete(entry.id); setConfirming(false) }}
+            className="px-2 py-1 rounded-xl text-xs font-bold"
+            style={{ background: '#ef4444', color: 'white' }}
+          >
+            Delete
+          </button>
+          <button
+            onClick={() => setConfirming(false)}
+            className="px-2 py-1 rounded-xl text-xs"
+            style={{ background: 'var(--color-bg)', color: 'var(--color-muted)' }}
+          >
+            Cancel
+          </button>
+        </div>
+      ) : (
+        <button
+          onClick={() => setConfirming(true)}
+          className="w-7 h-7 flex items-center justify-center rounded-xl"
+          style={{ background: 'var(--color-bg)', color: 'var(--color-muted)', fontSize: '16px' }}
+        >
+          🗑
+        </button>
+      )}
     </div>
   )
 }
 
 export default function SummaryScreen() {
-  const { profile, entries: todayEntries } = useApp()
+  const { entries: todayEntries, setEntries } = useApp()
   const [offset, setOffset] = useState(0) // 0 = today, 1 = yesterday, etc.
   const [dayEntries, setDayEntries] = useState([])
   const [loading, setLoading] = useState(false)
@@ -71,8 +100,13 @@ export default function SummaryScreen() {
     fetchDay()
   }, [offset, todayEntries])
 
+  const handleDelete = async (entryId) => {
+    await supabase.from('entries').update({ deleted_at: new Date().toISOString() }).eq('id', entryId)
+    setDayEntries(prev => prev.filter(e => e.id !== entryId))
+    if (offset === 0) setEntries(prev => prev.filter(e => e.id !== entryId))
+  }
+
   const fetchDay = async () => {
-    if (!profile?.family_id) return
     setLoading(true)
     const start = new Date(selectedDate)
     const end = new Date(selectedDate)
@@ -81,7 +115,7 @@ export default function SummaryScreen() {
     const { data } = await supabase
       .from('entries')
       .select('*')
-      .eq('family_id', profile.family_id)
+      .eq('family_id', FAMILY_ID)
       .gte('created_at', start.toISOString())
       .lt('created_at', end.toISOString())
       .is('deleted_at', null)
@@ -162,7 +196,7 @@ export default function SummaryScreen() {
                   Timeline
                 </p>
                 {dayEntries.map(entry => (
-                  <EntryRow key={entry.id} entry={entry} />
+                  <EntryRow key={entry.id} entry={entry} onDelete={handleDelete} />
                 ))}
               </div>
             )}

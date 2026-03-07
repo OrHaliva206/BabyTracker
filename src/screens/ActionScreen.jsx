@@ -58,55 +58,8 @@ function ActionButton({ children, color, textColor, onClick }) {
   )
 }
 
-function UndoToast({ entry, onUndo, onDismiss }) {
-  const [progress, setProgress] = useState(100)
-
-  useEffect(() => {
-    const duration = 5000
-    const start = Date.now()
-    const id = setInterval(() => {
-      const elapsed = Date.now() - start
-      const remaining = Math.max(0, 100 - (elapsed / duration) * 100)
-      setProgress(remaining)
-      if (remaining === 0) { clearInterval(id); onDismiss() }
-    }, 50)
-    return () => clearInterval(id)
-  }, [onDismiss])
-
-  const label = entry.type === 'bottle'
-    ? `+${entry.bottle_ml}ml bottle`
-    : entry.diaper_type === 'poop' ? '💩 Poop'
-    : entry.diaper_type === 'pee' ? '💧 Pee'
-    : '💛 Both'
-
-  return (
-    <div className="fixed bottom-24 left-4 right-4 z-50 rounded-2xl overflow-hidden shadow-lg"
-         style={{ background: 'var(--color-surface)' }}>
-      <div className="flex items-center justify-between px-4 py-3">
-        <span className="text-sm font-medium" style={{ color: 'var(--color-text)' }}>
-          Logged: {label}
-        </span>
-        <button
-          onClick={onUndo}
-          className="text-sm font-bold px-3 py-1 rounded-xl"
-          style={{ background: '#a8d8b9', color: '#1a2e22' }}
-        >
-          Undo
-        </button>
-      </div>
-      <div className="h-1" style={{ background: '#e5e7eb' }}>
-        <div
-          className="h-1 transition-none"
-          style={{ width: `${progress}%`, background: '#a8d8b9' }}
-        />
-      </div>
-    </div>
-  )
-}
-
 export default function ActionScreen({ onOpenSettings }) {
-  const { entries, addEntry, undoEntry, settings } = useApp()
-  const [pendingUndo, setPendingUndo] = useState(null)
+  const { entries, addEntry, settings } = useApp()
 
   const lastBottle = entries.find(e => e.type === 'bottle')
   const lastDiaper = entries.find(e => e.type === 'diaper')
@@ -118,21 +71,12 @@ export default function ActionScreen({ onOpenSettings }) {
   const peeCount = todayDiapers.filter(e => e.diaper_type === 'pee' || e.diaper_type === 'both').length
 
   const handleBottle = useCallback(async (ml) => {
-    const entry = await addEntry({ type: 'bottle', bottle_ml: ml })
-    if (entry) setPendingUndo(entry)
+    await addEntry({ type: 'bottle', bottle_ml: ml })
   }, [addEntry])
 
   const handleDiaper = useCallback(async (type) => {
-    const entry = await addEntry({ type: 'diaper', diaper_type: type })
-    if (entry) setPendingUndo(entry)
+    await addEntry({ type: 'diaper', diaper_type: type })
   }, [addEntry])
-
-  const handleUndo = async () => {
-    if (pendingUndo) {
-      await undoEntry(pendingUndo.id)
-      setPendingUndo(null)
-    }
-  }
 
   const bottleSizes = settings?.bottle_sizes || [30, 60, 90]
 
@@ -224,14 +168,6 @@ export default function ActionScreen({ onOpenSettings }) {
         </div>
       </div>
 
-      {/* Undo toast */}
-      {pendingUndo && (
-        <UndoToast
-          entry={pendingUndo}
-          onUndo={handleUndo}
-          onDismiss={() => setPendingUndo(null)}
-        />
-      )}
     </div>
   )
 }
