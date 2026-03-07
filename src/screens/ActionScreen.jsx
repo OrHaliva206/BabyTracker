@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { useApp } from '../context/AppContext'
 
 function formatElapsed(ms) {
@@ -14,7 +14,7 @@ function formatElapsed(ms) {
 function LastTimer({ label, timestamp }) {
   const [now, setNow] = useState(Date.now())
   useEffect(() => {
-    const id = setInterval(() => setNow(Date.now()), 30000)
+    const id = setInterval(() => setNow(Date.now()), 60000)
     return () => clearInterval(id)
   }, [])
   const elapsed = timestamp ? now - new Date(timestamp).getTime() : -1
@@ -30,30 +30,69 @@ function LastTimer({ label, timestamp }) {
   )
 }
 
-function ActionButton({ children, color, textColor, onClick }) {
-  const [pressed, setPressed] = useState(false)
+const COOLDOWN_MS = 2000
+
+function ActionButton({ children, color, onClick }) {
+  const [cooldown, setCooldown] = useState(0) // 1 = just pressed, 0 = ready
+  const [confirmed, setConfirmed] = useState(false)
+  const rafRef = useRef(null)
+
+  useEffect(() => () => cancelAnimationFrame(rafRef.current), [])
 
   const handlePress = () => {
-    setPressed(true)
+    if (cooldown > 0) return
     if (navigator.vibrate) navigator.vibrate(30)
     onClick()
-    setTimeout(() => setPressed(false), 150)
+    setConfirmed(true)
+    setCooldown(1)
+
+    const start = Date.now()
+    const tick = () => {
+      const remaining = Math.max(0, 1 - (Date.now() - start) / COOLDOWN_MS)
+      setCooldown(remaining)
+      if (remaining > 0) {
+        rafRef.current = requestAnimationFrame(tick)
+      } else {
+        setConfirmed(false)
+      }
+    }
+    rafRef.current = requestAnimationFrame(tick)
   }
 
   return (
     <button
       onPointerDown={handlePress}
-      className="rounded-3xl flex flex-col items-center justify-center font-bold transition-all duration-150 select-none active:scale-95"
+      className="rounded-3xl flex flex-col items-center justify-center font-bold select-none relative overflow-hidden"
       style={{
         background: color,
-        color: textColor || '#1a2e22',
-        transform: pressed ? 'scale(0.95)' : 'scale(1)',
+        color: '#1a2e22',
         minHeight: '90px',
         fontSize: '1rem',
         WebkitTapHighlightColor: 'transparent',
+        opacity: cooldown > 0 ? 0.85 : 1,
+        transform: cooldown === 1 ? 'scale(0.95)' : 'scale(1)',
+        transition: 'transform 0.1s, opacity 0.1s',
       }}
     >
-      {children}
+      {/* Draining overlay — shrinks from top as cooldown decreases */}
+      {cooldown > 0 && (
+        <div style={{
+          position: 'absolute',
+          top: 0, left: 0, right: 0,
+          height: `${cooldown * 100}%`,
+          background: 'rgba(255,255,255,0.35)',
+          transition: 'none',
+          pointerEvents: 'none',
+        }} />
+      )}
+
+      {confirmed ? (
+        <span style={{ fontSize: '1.8rem', position: 'relative' }}>✓</span>
+      ) : (
+        <div className="flex flex-col items-center justify-center gap-0.5" style={{ position: 'relative' }}>
+          {children}
+        </div>
+      )}
     </button>
   )
 }
