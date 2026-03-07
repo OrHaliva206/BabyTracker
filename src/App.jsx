@@ -1,18 +1,52 @@
 import { useState } from 'react'
 import { AppProvider, useApp } from './context/AppContext'
 import { useRealtime } from './hooks/useRealtime'
-import AuthScreen from './screens/AuthScreen'
-import OnboardingScreen from './screens/OnboardingScreen'
 import ActionScreen from './screens/ActionScreen'
 import SummaryScreen from './screens/SummaryScreen'
 import SettingsSheet from './components/SettingsSheet'
 
+function NameScreen() {
+  const { setUserName } = useApp()
+  const [name, setName] = useState('')
+
+  return (
+    <div className="min-h-screen flex flex-col items-center justify-center px-6"
+         style={{ background: 'var(--color-bg)' }}>
+      <div className="w-full max-w-sm">
+        <div className="text-center mb-10">
+          <div className="text-7xl mb-3">👶</div>
+          <h1 className="text-3xl font-bold" style={{ color: 'var(--color-text)' }}>JohnnyTracker</h1>
+          <p className="mt-2 text-sm" style={{ color: 'var(--color-muted)' }}>What should we call you?</p>
+        </div>
+        <div className="flex flex-col gap-4">
+          <input
+            type="text"
+            value={name}
+            onChange={e => setName(e.target.value)}
+            onKeyDown={e => e.key === 'Enter' && name.trim() && setUserName(name.trim())}
+            placeholder="Dad / Mom / your name…"
+            autoFocus
+            maxLength={20}
+            className="w-full px-4 py-4 rounded-2xl text-base outline-none text-center text-xl"
+            style={{ background: 'var(--color-surface)', color: 'var(--color-text)', border: '2px solid #a8d8b9' }}
+          />
+          <button
+            onClick={() => name.trim() && setUserName(name.trim())}
+            disabled={!name.trim()}
+            className="w-full py-4 rounded-2xl text-base font-semibold disabled:opacity-50"
+            style={{ background: '#a8d8b9', color: '#1a2e22' }}
+          >
+            Let's go
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 function TabBar({ active, onChange }) {
   return (
-    <div className="flex border-t" style={{
-      background: 'var(--color-surface)',
-      borderColor: 'rgba(107,138,116,0.15)',
-    }}>
+    <div className="flex border-t" style={{ background: 'var(--color-surface)', borderColor: 'rgba(107,138,116,0.15)' }}>
       {[
         { id: 'action', icon: '🍼', label: 'Track' },
         { id: 'summary', icon: '📊', label: 'Summary' },
@@ -35,13 +69,13 @@ function TabBar({ active, onChange }) {
 }
 
 function MainApp() {
-  const { session, profile, family } = useApp()
+  const { userName, ready } = useApp()
   const [tab, setTab] = useState('action')
   const [settingsOpen, setSettingsOpen] = useState(false)
 
   useRealtime()
 
-  if (session === undefined) {
+  if (!ready) {
     return (
       <div className="min-h-screen flex items-center justify-center" style={{ background: 'var(--color-bg)' }}>
         <div className="text-4xl">👶</div>
@@ -49,8 +83,7 @@ function MainApp() {
     )
   }
 
-  if (!session) return <AuthScreen />
-  if (!profile || !family) return <OnboardingScreen />
+  if (!userName) return <NameScreen />
 
   return (
     <div className="flex flex-col h-full" style={{ maxWidth: '480px', margin: '0 auto' }}>
