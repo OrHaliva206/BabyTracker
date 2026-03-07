@@ -141,7 +141,7 @@ export default function ActionScreen({ onOpenSettings }) {
       {/* Header */}
       <div className="flex items-center justify-between px-5 pt-safe pt-5 pb-3">
         <div>
-          <h1 className="text-2xl font-bold" style={{ color: 'var(--color-text)' }}>Johnny 👶</h1>
+          <h1 className="text-2xl font-bold" style={{ color: 'var(--color-text)' }}>JohnnyTracker 👶</h1>
         </div>
         <button
           onClick={onOpenSettings}

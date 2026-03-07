@@ -12,8 +12,8 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['icons/*.png'],
       manifest: {
-        name: 'Johnny 👶',
-        short_name: 'Johnny',
+        name: 'JohnnyTracker',
+        short_name: 'JohnnyTracker',
         description: 'Baby feeding and diaper tracker',
         theme_color: '#a8d8b9',
         background_color: '#f0faf4',

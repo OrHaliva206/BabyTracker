@@ -34,7 +34,7 @@ export default function AuthScreen() {
         {/* Logo */}
         <div className="text-center mb-10">
           <div className="text-7xl mb-3">👶</div>
-          <h1 className="text-3xl font-bold" style={{ color: 'var(--color-text)' }}>Johnny</h1>
+          <h1 className="text-3xl font-bold" style={{ color: 'var(--color-text)' }}>JohnnyTracker</h1>
           <p className="mt-1 text-sm" style={{ color: 'var(--color-muted)' }}>Baby tracker for the whole family</p>
         </div>
 

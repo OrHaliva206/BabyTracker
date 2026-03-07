@@ -38,7 +38,7 @@ export default function SettingsSheet({ onClose }) {
     if (!family?.invite_code) return
     if (navigator.share) {
       navigator.share({
-        title: 'Join Johnny tracker',
+        title: 'Join JohnnyTracker',
         text: `Join our baby tracker with code: ${family.invite_code}`,
       })
     } else {
