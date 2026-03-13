@@ -34,13 +34,12 @@ function StatCard({ icon, title, value, subtitle }) {
 
 function EntryRow({ entry, onDelete }) {
   const [confirming, setConfirming] = useState(false)
-  const isBottle = entry.type === 'bottle'
-  const isExtra = entry.type === 'bottle_extra'
-  const icon = (isBottle || isExtra) ? '🍼'
+  const isBottle = entry.type === 'bottle' || entry.type === 'bottle_extra'
+  const icon = isBottle ? '🍼'
     : entry.diaper_type === 'poop' ? '💩'
     : entry.diaper_type === 'pee' ? '💧' : '💛'
-  const label = isBottle ? `${entry.bottle_ml} ml`
-    : isExtra ? `+${entry.bottle_ml} ml extra`
+  const label = isBottle
+    ? (entry.bottle_ml === 10 ? '+10 ml extra' : `${entry.bottle_ml} ml`)
     : entry.diaper_type === 'poop' ? 'Poop'
     : entry.diaper_type === 'pee' ? 'Pee' : 'Both'
 

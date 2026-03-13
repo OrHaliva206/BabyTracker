@@ -94,7 +94,7 @@ export default function ActionScreen({ onOpenSettings }) {
   }, [addEntry])
 
   const handleAddTen = useCallback(async () => {
-    await addEntry({ type: 'bottle_extra', bottle_ml: 10 })
+    await addEntry({ type: 'bottle', bottle_ml: 10 })
   }, [addEntry])
 
   const handleDiaper = useCallback(async (type) => {
