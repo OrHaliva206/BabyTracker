@@ -70,6 +70,8 @@ export function AppProvider({ children }) {
       .select()
       .single()
     if (error) { console.error(error); return null }
+    // Update local state immediately — don't wait for realtime
+    setEntries(prev => prev.find(e => e.id === data.id) ? prev : [data, ...prev])
     return data
   }, [userName])
 

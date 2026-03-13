@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from 'react'
+import { useState, useCallback, useRef } from 'react'
 import { useApp } from '../context/AppContext'
 
 function formatElapsed(ms) {
@@ -30,83 +30,47 @@ function LastTimer({ label, timestamp }) {
   )
 }
 
-const COOLDOWN_MS = 2000
-
-const SCROLL_THRESHOLD = 10 // px movement = treat as scroll, not tap
+const SCROLL_THRESHOLD = 10 // px — more movement = scroll, not tap
 
 function ActionButton({ children, color, onClick }) {
-  const [cooldown, setCooldown] = useState(0) // 1 = just pressed, 0 = ready
-  const [confirmed, setConfirmed] = useState(false)
-  const rafRef = useRef(null)
+  const [pressed, setPressed] = useState(false)
   const pointerStart = useRef(null)
-
-  useEffect(() => () => cancelAnimationFrame(rafRef.current), [])
 
   const handlePointerDown = (e) => {
     pointerStart.current = { x: e.clientX, y: e.clientY }
+    setPressed(true)
   }
 
   const handlePointerUp = (e) => {
+    setPressed(false)
     if (!pointerStart.current) return
     const dx = Math.abs(e.clientX - pointerStart.current.x)
     const dy = Math.abs(e.clientY - pointerStart.current.y)
     pointerStart.current = null
     if (dx > SCROLL_THRESHOLD || dy > SCROLL_THRESHOLD) return // was a scroll
-    if (cooldown > 0) return
     if (navigator.vibrate) navigator.vibrate(30)
     onClick()
-    setConfirmed(true)
-    setCooldown(1)
-
-    const start = Date.now()
-    const tick = () => {
-      const remaining = Math.max(0, 1 - (Date.now() - start) / COOLDOWN_MS)
-      setCooldown(remaining)
-      if (remaining > 0) {
-        rafRef.current = requestAnimationFrame(tick)
-      } else {
-        setConfirmed(false)
-      }
-    }
-    rafRef.current = requestAnimationFrame(tick)
   }
 
   return (
     <button
       onPointerDown={handlePointerDown}
       onPointerUp={handlePointerUp}
-      onPointerLeave={() => { pointerStart.current = null }}
-      className="rounded-3xl flex flex-col items-center justify-center font-bold select-none relative overflow-hidden"
+      onPointerLeave={() => { setPressed(false); pointerStart.current = null }}
+      className="rounded-3xl flex flex-col items-center justify-center font-bold select-none"
       style={{
         background: color,
         color: '#1a2e22',
         minHeight: '90px',
         fontSize: '1rem',
         WebkitTapHighlightColor: 'transparent',
-        opacity: cooldown > 0 ? 0.85 : 1,
-        transform: cooldown === 1 ? 'scale(0.95)' : 'scale(1)',
-        transition: 'transform 0.1s, opacity 0.1s',
+        transform: pressed ? 'scale(0.93)' : 'scale(1)',
+        transition: 'transform 0.08s',
       }}
     >
-      {/* Draining overlay — shrinks from top as cooldown decreases */}
-      {cooldown > 0 && (
-        <div style={{
-          position: 'absolute',
-          top: 0, left: 0, right: 0,
-          height: `${cooldown * 100}%`,
-          background: 'rgba(255,255,255,0.35)',
-          transition: 'none',
-          pointerEvents: 'none',
-        }} />
-      )}
-
-      {confirmed ? (
-        <span style={{ fontSize: '1.8rem', position: 'relative' }}>✓</span>
-      ) : (
-        <div className="flex flex-col items-center justify-center gap-0.5" style={{ position: 'relative' }}>
-          {children}
-        </div>
-      )}
+      <div className="flex flex-col items-center justify-center gap-0.5">
+        {children}
+      </div>
     </button>
   )
 }
