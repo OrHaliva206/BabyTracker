@@ -14,7 +14,7 @@ drop function if exists get_my_family_id cascade;
 create table entries (
   id             uuid primary key default gen_random_uuid(),
   family_id      uuid not null,
-  type           text not null check (type in ('bottle', 'diaper')),
+  type           text not null check (type in ('bottle', 'bottle_extra', 'diaper')),
   bottle_ml      integer,
   diaper_type    text check (diaper_type in ('poop', 'pee', 'both')),
   logged_by_name text,
