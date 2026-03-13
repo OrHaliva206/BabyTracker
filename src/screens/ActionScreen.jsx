@@ -81,11 +81,11 @@ export default function ActionScreen({ onOpenSettings }) {
   const lastBottle = entries.find(e => e.type === 'bottle')
   const lastDiaper = entries.find(e => e.type === 'diaper')
 
-  const todayBottles = entries.filter(e => e.type === 'bottle')
+  const todayBottles = entries.filter(e => e.type === 'bottle') // excludes bottle_extra
   const todayDiapers = entries.filter(e => e.type === 'diaper')
   const totalMl = entries
     .filter(e => e.type === 'bottle' || e.type === 'bottle_extra')
-    .reduce((sum, e) => sum + (e.bottle_ml || 0), 0)
+    .reduce((sum, e) => sum + (e.bottle_ml || 0), 0) // includes +10 extras
   const poopCount = todayDiapers.filter(e => e.diaper_type === 'poop' || e.diaper_type === 'both').length
   const peeCount = todayDiapers.filter(e => e.diaper_type === 'pee' || e.diaper_type === 'both').length
 
@@ -94,7 +94,7 @@ export default function ActionScreen({ onOpenSettings }) {
   }, [addEntry])
 
   const handleAddTen = useCallback(async () => {
-    await addEntry({ type: 'bottle', bottle_ml: 10 })
+    await addEntry({ type: 'bottle_extra', bottle_ml: 10 })
   }, [addEntry])
 
   const handleDiaper = useCallback(async (type) => {
