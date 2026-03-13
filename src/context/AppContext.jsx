@@ -22,6 +22,18 @@ export function AppProvider({ children }) {
     loadSettings()
     loadTodayEntries()
     setReady(true)
+
+    // Refetch when user switches back to the app (phone wake-up / tab focus)
+    const onVisible = () => { if (document.visibilityState === 'visible') loadTodayEntries() }
+    document.addEventListener('visibilitychange', onVisible)
+
+    // Polling fallback every 30s in case realtime misses an update
+    const poll = setInterval(loadTodayEntries, 30_000)
+
+    return () => {
+      document.removeEventListener('visibilitychange', onVisible)
+      clearInterval(poll)
+    }
   }, [])
 
   const setUserName = (name) => {
@@ -61,11 +73,36 @@ export function AppProvider({ children }) {
     return data
   }, [userName])
 
+  const getLastBottleEver = useCallback(async () => {
+    const { data } = await supabase
+      .from('entries')
+      .select('*')
+      .eq('family_id', FAMILY_ID)
+      .eq('type', 'bottle')
+      .is('deleted_at', null)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle()
+    return data
+  }, [])
+
   const undoEntry = useCallback(async (entryId) => {
     await supabase
       .from('entries')
       .update({ deleted_at: new Date().toISOString() })
       .eq('id', entryId)
+  }, [])
+
+  const updateEntry = useCallback(async (entryId, changes) => {
+    const { data, error } = await supabase
+      .from('entries')
+      .update(changes)
+      .eq('id', entryId)
+      .select()
+      .single()
+    if (error) { console.error(error); return null }
+    setEntries(prev => prev.map(e => e.id === entryId ? data : e))
+    return data
   }, [])
 
   const updateSettings = useCallback(async (newSizes) => {
@@ -88,6 +125,8 @@ export function AppProvider({ children }) {
       setDarkMode,
       addEntry,
       undoEntry,
+      updateEntry,
+      getLastBottleEver,
       updateSettings,
       loadTodayEntries,
       ready,

@@ -32,14 +32,26 @@ function LastTimer({ label, timestamp }) {
 
 const COOLDOWN_MS = 2000
 
+const SCROLL_THRESHOLD = 10 // px movement = treat as scroll, not tap
+
 function ActionButton({ children, color, onClick }) {
   const [cooldown, setCooldown] = useState(0) // 1 = just pressed, 0 = ready
   const [confirmed, setConfirmed] = useState(false)
   const rafRef = useRef(null)
+  const pointerStart = useRef(null)
 
   useEffect(() => () => cancelAnimationFrame(rafRef.current), [])
 
-  const handlePress = () => {
+  const handlePointerDown = (e) => {
+    pointerStart.current = { x: e.clientX, y: e.clientY }
+  }
+
+  const handlePointerUp = (e) => {
+    if (!pointerStart.current) return
+    const dx = Math.abs(e.clientX - pointerStart.current.x)
+    const dy = Math.abs(e.clientY - pointerStart.current.y)
+    pointerStart.current = null
+    if (dx > SCROLL_THRESHOLD || dy > SCROLL_THRESHOLD) return // was a scroll
     if (cooldown > 0) return
     if (navigator.vibrate) navigator.vibrate(30)
     onClick()
@@ -61,7 +73,9 @@ function ActionButton({ children, color, onClick }) {
 
   return (
     <button
-      onPointerDown={handlePress}
+      onPointerDown={handlePointerDown}
+      onPointerUp={handlePointerUp}
+      onPointerLeave={() => { pointerStart.current = null }}
       className="rounded-3xl flex flex-col items-center justify-center font-bold select-none relative overflow-hidden"
       style={{
         background: color,
@@ -98,7 +112,7 @@ function ActionButton({ children, color, onClick }) {
 }
 
 export default function ActionScreen({ onOpenSettings }) {
-  const { entries, addEntry, settings } = useApp()
+  const { entries, addEntry, updateEntry, getLastBottleEver, settings } = useApp()
 
   const lastBottle = entries.find(e => e.type === 'bottle')
   const lastDiaper = entries.find(e => e.type === 'diaper')
@@ -112,6 +126,13 @@ export default function ActionScreen({ onOpenSettings }) {
   const handleBottle = useCallback(async (ml) => {
     await addEntry({ type: 'bottle', bottle_ml: ml })
   }, [addEntry])
+
+  const handleAddTen = useCallback(async () => {
+    let target = lastBottle
+    if (!target) target = await getLastBottleEver()
+    if (!target) return
+    await updateEntry(target.id, { bottle_ml: (target.bottle_ml || 0) + 10 })
+  }, [lastBottle, updateEntry, getLastBottleEver])
 
   const handleDiaper = useCallback(async (type) => {
     await addEntry({ type: 'diaper', diaper_type: type })
@@ -161,6 +182,12 @@ export default function ActionScreen({ onOpenSettings }) {
                 <span className="text-xs font-semibold opacity-70">ml</span>
               </ActionButton>
             ))}
+          </div>
+          <div className="mt-3">
+            <ActionButton color="#c8f0d4" onClick={handleAddTen}>
+              <span className="text-xl font-bold">+10 ml</span>
+              <span className="text-xs font-semibold opacity-70">add to last feeding</span>
+            </ActionButton>
           </div>
         </div>
 
