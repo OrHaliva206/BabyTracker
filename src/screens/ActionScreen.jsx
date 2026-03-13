@@ -112,14 +112,16 @@ function ActionButton({ children, color, onClick }) {
 }
 
 export default function ActionScreen({ onOpenSettings }) {
-  const { entries, addEntry, updateEntry, getLastBottleEver, settings } = useApp()
+  const { entries, addEntry, settings } = useApp()
 
   const lastBottle = entries.find(e => e.type === 'bottle')
   const lastDiaper = entries.find(e => e.type === 'diaper')
 
   const todayBottles = entries.filter(e => e.type === 'bottle')
   const todayDiapers = entries.filter(e => e.type === 'diaper')
-  const totalMl = todayBottles.reduce((sum, e) => sum + (e.bottle_ml || 0), 0)
+  const totalMl = entries
+    .filter(e => e.type === 'bottle' || e.type === 'bottle_extra')
+    .reduce((sum, e) => sum + (e.bottle_ml || 0), 0)
   const poopCount = todayDiapers.filter(e => e.diaper_type === 'poop' || e.diaper_type === 'both').length
   const peeCount = todayDiapers.filter(e => e.diaper_type === 'pee' || e.diaper_type === 'both').length
 
@@ -128,17 +130,15 @@ export default function ActionScreen({ onOpenSettings }) {
   }, [addEntry])
 
   const handleAddTen = useCallback(async () => {
-    let target = lastBottle
-    if (!target) target = await getLastBottleEver()
-    if (!target) return
-    await updateEntry(target.id, { bottle_ml: (target.bottle_ml || 0) + 10 })
-  }, [lastBottle, updateEntry, getLastBottleEver])
+    await addEntry({ type: 'bottle_extra', bottle_ml: 10 })
+  }, [addEntry])
 
   const handleDiaper = useCallback(async (type) => {
     await addEntry({ type: 'diaper', diaper_type: type })
   }, [addEntry])
 
-  const bottleSizes = settings?.bottle_sizes || [30, 60, 90]
+  // Remove 10 from bottleSizes — +10 button takes that slot
+  const bottleSizes = (settings?.bottle_sizes || [30, 60, 90]).filter(s => s !== 10)
 
   return (
     <div className="flex flex-col h-full" style={{ background: 'var(--color-bg)' }}>
@@ -172,6 +172,10 @@ export default function ActionScreen({ onOpenSettings }) {
             🍼 Bottle
           </p>
           <div className="grid grid-cols-3 gap-3">
+            <ActionButton color="#c8f0d4" onClick={handleAddTen}>
+              <span className="text-2xl font-bold">+10</span>
+              <span className="text-xs font-semibold opacity-70">ml extra</span>
+            </ActionButton>
             {bottleSizes.map((ml) => (
               <ActionButton
                 key={ml}
@@ -182,12 +186,6 @@ export default function ActionScreen({ onOpenSettings }) {
                 <span className="text-xs font-semibold opacity-70">ml</span>
               </ActionButton>
             ))}
-          </div>
-          <div className="mt-3">
-            <ActionButton color="#c8f0d4" onClick={handleAddTen}>
-              <span className="text-xl font-bold">+10 ml</span>
-              <span className="text-xs font-semibold opacity-70">add to last feeding</span>
-            </ActionButton>
           </div>
         </div>
 
