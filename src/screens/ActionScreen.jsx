@@ -68,7 +68,7 @@ function ActionButton({ children, color, onClick }) {
         transition: 'transform 0.08s',
       }}
     >
-      <div className="flex flex-col items-center justify-center gap-0.5">
+      <div className="flex flex-col items-center justify-center gap-0.5" style={{ pointerEvents: 'none' }}>
         {children}
       </div>
     </button>
