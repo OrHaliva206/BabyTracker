@@ -32,16 +32,25 @@ function StatCard({ icon, title, value, subtitle }) {
   )
 }
 
+const ACTIVITY_META = {
+  vitamin_d:   { icon: '☀️',  label: 'Vitamin D' },
+  bath:        { icon: '🛁',  label: 'Bath' },
+  tummy_time:  { icon: '🤸', label: 'Tummy Time' },
+}
+
+function entryDisplay(entry) {
+  if (entry.type === 'bottle')       return { icon: '🍼', label: `${entry.bottle_ml} ml` }
+  if (entry.type === 'bottle_extra') return { icon: '🍼', label: `+${entry.bottle_ml} ml extra` }
+  if (entry.type === 'activity')     return ACTIVITY_META[entry.diaper_type] || { icon: '🌟', label: entry.diaper_type }
+  // diaper
+  if (entry.diaper_type === 'poop')  return { icon: '💩', label: 'Poop' }
+  if (entry.diaper_type === 'pee')   return { icon: '💧', label: 'Pee' }
+  return { icon: '💛', label: 'Both' }
+}
+
 function EntryRow({ entry, onDelete }) {
   const [confirming, setConfirming] = useState(false)
-  const isBottle = entry.type === 'bottle' || entry.type === 'bottle_extra'
-  const icon = isBottle ? '🍼'
-    : entry.diaper_type === 'poop' ? '💩'
-    : entry.diaper_type === 'pee' ? '💧' : '💛'
-  const label = isBottle
-    ? (entry.bottle_ml === 10 ? '+10 ml extra' : `${entry.bottle_ml} ml`)
-    : entry.diaper_type === 'poop' ? 'Poop'
-    : entry.diaper_type === 'pee' ? 'Pee' : 'Both'
+  const { icon, label } = entryDisplay(entry)
 
   return (
     <div className="flex items-center gap-3 px-4 py-3 rounded-2xl" style={{ background: 'var(--color-surface)' }}>

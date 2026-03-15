@@ -75,77 +75,62 @@ function ActionButton({ children, color, onClick }) {
   )
 }
 
+const BOTTLE_SIZES = [10, 30, 60]
+const EXTRA_SIZES  = [10, 30, 60]
+const ACTIVITIES = [
+  { key: 'vitamin_d',   label: 'Vitamin D',   icon: '☀️',  color: '#fff3b0' },
+  { key: 'bath',        label: 'Bath',         icon: '🛁',  color: '#c8e6f5' },
+  { key: 'tummy_time',  label: 'Tummy Time',   icon: '🤸', color: '#e8d5f5' },
+]
+
 export default function ActionScreen({ onOpenSettings }) {
-  const { entries, addEntry, settings } = useApp()
+  const { entries, addEntry } = useApp()
 
   const lastBottle = entries.find(e => e.type === 'bottle')
   const lastDiaper = entries.find(e => e.type === 'diaper')
 
-  const todayBottles = entries.filter(e => e.type === 'bottle') // excludes bottle_extra
+  const todayBottles = entries.filter(e => e.type === 'bottle')
   const todayDiapers = entries.filter(e => e.type === 'diaper')
   const totalMl = entries
     .filter(e => e.type === 'bottle' || e.type === 'bottle_extra')
-    .reduce((sum, e) => sum + (e.bottle_ml || 0), 0) // includes +10 extras
+    .reduce((sum, e) => sum + (e.bottle_ml || 0), 0)
   const poopCount = todayDiapers.filter(e => e.diaper_type === 'poop' || e.diaper_type === 'both').length
-  const peeCount = todayDiapers.filter(e => e.diaper_type === 'pee' || e.diaper_type === 'both').length
+  const peeCount  = todayDiapers.filter(e => e.diaper_type === 'pee'  || e.diaper_type === 'both').length
 
-  const handleBottle = useCallback(async (ml) => {
-    await addEntry({ type: 'bottle', bottle_ml: ml })
-  }, [addEntry])
-
-  const handleAddTen = useCallback(async () => {
-    await addEntry({ type: 'bottle_extra', bottle_ml: 10 })
-  }, [addEntry])
-
-  const handleDiaper = useCallback(async (type) => {
-    await addEntry({ type: 'diaper', diaper_type: type })
-  }, [addEntry])
-
-  // Remove 10 from bottleSizes — +10 button takes that slot
-  const bottleSizes = (settings?.bottle_sizes || [30, 60, 90]).filter(s => s !== 10)
+  const handleBottle   = useCallback((ml)   => addEntry({ type: 'bottle',       bottle_ml: ml }), [addEntry])
+  const handleExtra    = useCallback((ml)   => addEntry({ type: 'bottle_extra', bottle_ml: ml }), [addEntry])
+  const handleDiaper   = useCallback((kind) => addEntry({ type: 'diaper',       diaper_type: kind }), [addEntry])
+  const handleActivity = useCallback((key)  => addEntry({ type: 'activity',     diaper_type: key }), [addEntry])
 
   return (
     <div className="flex flex-col h-full" style={{ background: 'var(--color-bg)' }}>
       {/* Header */}
       <div className="flex items-center justify-between px-5 pt-safe pt-5 pb-3">
-        <div>
-          <h1 className="text-2xl font-bold" style={{ color: 'var(--color-text)' }}>JohnnyTracker 👶</h1>
-        </div>
+        <h1 className="text-2xl font-bold" style={{ color: 'var(--color-text)' }}>JohnnyTracker 👶</h1>
         <button
           onClick={onOpenSettings}
           className="w-10 h-10 rounded-full flex items-center justify-center text-xl"
           style={{ background: 'var(--color-surface)', color: 'var(--color-text)' }}
-        >
-          ⚙️
-        </button>
+        >⚙️</button>
       </div>
 
-      {/* Last fed / changed timers */}
+      {/* Timers */}
       <div className="flex justify-around px-5 py-3 mx-4 rounded-2xl mb-4"
            style={{ background: 'var(--color-surface)' }}>
-        <LastTimer label="Last fed" timestamp={lastBottle?.created_at} />
+        <LastTimer label="Last fed"     timestamp={lastBottle?.created_at} />
         <div className="w-px" style={{ background: 'var(--color-muted)', opacity: 0.2 }} />
         <LastTimer label="Last changed" timestamp={lastDiaper?.created_at} />
       </div>
 
-      {/* Main buttons */}
-      <div className="flex-1 overflow-y-auto px-4 flex flex-col gap-5 pb-4">
-        {/* Bottles */}
+      {/* Button rows */}
+      <div className="flex-1 overflow-y-auto px-4 flex flex-col gap-4 pb-4">
+
+        {/* Row 1 — Bottle (new feeding) */}
         <div>
-          <p className="text-xs font-semibold uppercase tracking-wider mb-2 px-1" style={{ color: 'var(--color-muted)' }}>
-            🍼 Bottle
-          </p>
+          <p className="text-xs font-semibold uppercase tracking-wider mb-2 px-1" style={{ color: 'var(--color-muted)' }}>🍼 Bottle</p>
           <div className="grid grid-cols-3 gap-3">
-            <ActionButton color="#c8f0d4" onClick={handleAddTen}>
-              <span className="text-2xl font-bold">+10</span>
-              <span className="text-xs font-semibold opacity-70">ml extra</span>
-            </ActionButton>
-            {bottleSizes.map((ml) => (
-              <ActionButton
-                key={ml}
-                color="#a8d8b9"
-                onClick={() => handleBottle(ml)}
-              >
+            {BOTTLE_SIZES.map(ml => (
+              <ActionButton key={ml} color="#a8d8b9" onClick={() => handleBottle(ml)}>
                 <span className="text-2xl font-bold">{ml}</span>
                 <span className="text-xs font-semibold opacity-70">ml</span>
               </ActionButton>
@@ -153,11 +138,22 @@ export default function ActionScreen({ onOpenSettings }) {
           </div>
         </div>
 
-        {/* Diapers */}
+        {/* Row 2 — Extra ml (no new feed) */}
         <div>
-          <p className="text-xs font-semibold uppercase tracking-wider mb-2 px-1" style={{ color: 'var(--color-muted)' }}>
-            🧷 Diaper
-          </p>
+          <p className="text-xs font-semibold uppercase tracking-wider mb-2 px-1" style={{ color: 'var(--color-muted)' }}>➕ Extra ml</p>
+          <div className="grid grid-cols-3 gap-3">
+            {EXTRA_SIZES.map(ml => (
+              <ActionButton key={ml} color="#d4f0de" onClick={() => handleExtra(ml)}>
+                <span className="text-2xl font-bold">+{ml}</span>
+                <span className="text-xs font-semibold opacity-70">ml</span>
+              </ActionButton>
+            ))}
+          </div>
+        </div>
+
+        {/* Row 3 — Diaper */}
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-wider mb-2 px-1" style={{ color: 'var(--color-muted)' }}>🧷 Diaper</p>
           <div className="grid grid-cols-3 gap-3">
             <ActionButton color="#f5d6a8" onClick={() => handleDiaper('poop')}>
               <span className="text-3xl">💩</span>
@@ -173,6 +169,20 @@ export default function ActionScreen({ onOpenSettings }) {
             </ActionButton>
           </div>
         </div>
+
+        {/* Row 4 — Activities */}
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-wider mb-2 px-1" style={{ color: 'var(--color-muted)' }}>🌟 Activities</p>
+          <div className="grid grid-cols-3 gap-3">
+            {ACTIVITIES.map(a => (
+              <ActionButton key={a.key} color={a.color} onClick={() => handleActivity(a.key)}>
+                <span className="text-3xl">{a.icon}</span>
+                <span className="text-xs font-semibold mt-1">{a.label}</span>
+              </ActionButton>
+            ))}
+          </div>
+        </div>
+
       </div>
 
       {/* Daily stats bar */}
@@ -195,7 +205,6 @@ export default function ActionScreen({ onOpenSettings }) {
           <div className="text-xs" style={{ color: 'var(--color-muted)' }}>💧</div>
         </div>
       </div>
-
     </div>
   )
 }
