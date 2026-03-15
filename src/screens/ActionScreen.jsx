@@ -80,8 +80,7 @@ export default function ActionScreen({ onOpenSettings }) {
   const lastDiaper = entries.find(e => e.type === 'diaper')
 
   const todayBottles = entries.filter(e => e.type === 'bottle')
-  const ACTIVITY_KEYS = ['vitamin_d', 'bath', 'tummy_time']
-  const todayDiapers = entries.filter(e => e.type === 'diaper' && !ACTIVITY_KEYS.includes(e.diaper_type))
+  const todayDiapers = entries.filter(e => e.type === 'diaper')
   const totalMl = entries
     .filter(e => e.type === 'bottle' || e.type === 'bottle_extra')
     .reduce((sum, e) => sum + (e.bottle_ml || 0), 0)
@@ -91,7 +90,7 @@ export default function ActionScreen({ onOpenSettings }) {
   const handleBottle   = useCallback((ml)   => addEntry({ type: 'bottle',       bottle_ml: ml }), [addEntry])
   const handleExtra    = useCallback((ml)   => addEntry({ type: 'bottle_extra', bottle_ml: ml }), [addEntry])
   const handleDiaper   = useCallback((kind) => addEntry({ type: 'diaper', diaper_type: kind }), [addEntry])
-  const handleActivity = useCallback((key)  => addEntry({ type: 'diaper', diaper_type: key }),  [addEntry])
+  const handleActivity = useCallback((key)  => addEntry({ type: 'activity', diaper_type: key }), [addEntry])
 
   return (
     <div className="flex flex-col h-full" style={{ background: 'var(--color-bg)' }}>

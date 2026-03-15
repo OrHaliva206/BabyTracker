@@ -38,12 +38,10 @@ const ACTIVITY_META = {
   tummy_time:  { icon: '🤸', label: 'Tummy Time' },
 }
 
-const ACTIVITY_KEYS = ['vitamin_d', 'bath', 'tummy_time']
-
 function entryDisplay(entry) {
   if (entry.type === 'bottle')       return { icon: '🍼', label: `${entry.bottle_ml} ml` }
   if (entry.type === 'bottle_extra') return { icon: '🍼', label: `+${entry.bottle_ml} ml extra` }
-  if (ACTIVITY_META[entry.diaper_type]) return ACTIVITY_META[entry.diaper_type]
+  if (entry.type === 'activity')     return ACTIVITY_META[entry.diaper_type] || { icon: '🌟', label: entry.diaper_type }
   if (entry.diaper_type === 'poop')  return { icon: '💩', label: 'Poop' }
   if (entry.diaper_type === 'pee')   return { icon: '💧', label: 'Pee' }
   return { icon: '💛', label: 'Both' }
@@ -189,7 +187,7 @@ export default function SummaryScreen() {
 
   // Day view stats
   const bottles = dayEntries.filter(e => e.type === 'bottle')
-  const diapers = dayEntries.filter(e => e.type === 'diaper' && !ACTIVITY_KEYS.includes(e.diaper_type))
+  const diapers = dayEntries.filter(e => e.type === 'diaper')
   const totalMl = dayEntries
     .filter(e => e.type === 'bottle' || e.type === 'bottle_extra')
     .reduce((sum, e) => sum + (e.bottle_ml || 0), 0)
@@ -198,7 +196,7 @@ export default function SummaryScreen() {
 
   // Range view stats
   const rangeBottles = rangeEntries.filter(e => e.type === 'bottle')
-  const rangeDiapers = rangeEntries.filter(e => e.type === 'diaper' && !ACTIVITY_KEYS.includes(e.diaper_type))
+  const rangeDiapers = rangeEntries.filter(e => e.type === 'diaper')
   const rangeTotalMl = rangeEntries
     .filter(e => e.type === 'bottle' || e.type === 'bottle_extra')
     .reduce((sum, e) => sum + (e.bottle_ml || 0), 0)
