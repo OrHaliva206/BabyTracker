@@ -33,12 +33,19 @@ function LastTimer({ label, timestamp }) {
 function ActionButton({ children, color, onClick }) {
   const [pressed, setPressed] = useState(false)
 
+  const handleClick = () => {
+    if (navigator.vibrate) navigator.vibrate(30)
+    onClick()
+  }
+
   return (
     <button
+      onMouseDown={() => setPressed(true)}
+      onMouseUp={() => setPressed(false)}
+      onMouseLeave={() => setPressed(false)}
       onTouchStart={() => setPressed(true)}
-      onTouchEnd={() => { setPressed(false); if (navigator.vibrate) navigator.vibrate(30); onClick() }}
-      onTouchCancel={() => setPressed(false)}
-      onClick={onClick}
+      onTouchEnd={() => setPressed(false)}
+      onClick={handleClick}
       className="rounded-3xl flex flex-col items-center justify-center font-bold select-none"
       style={{
         background: color,
