@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useApp } from '../context/AppContext'
 
 function formatElapsed(ms) {
@@ -30,33 +30,15 @@ function LastTimer({ label, timestamp }) {
   )
 }
 
-const SCROLL_THRESHOLD = 10 // px — more movement = scroll, not tap
-
 function ActionButton({ children, color, onClick }) {
   const [pressed, setPressed] = useState(false)
-  const pointerStart = useRef(null)
-
-  const handlePointerDown = (e) => {
-    pointerStart.current = { x: e.clientX, y: e.clientY }
-    setPressed(true)
-  }
-
-  const handlePointerUp = (e) => {
-    setPressed(false)
-    if (!pointerStart.current) return
-    const dx = Math.abs(e.clientX - pointerStart.current.x)
-    const dy = Math.abs(e.clientY - pointerStart.current.y)
-    pointerStart.current = null
-    if (dx > SCROLL_THRESHOLD || dy > SCROLL_THRESHOLD) return // was a scroll
-    if (navigator.vibrate) navigator.vibrate(30)
-    onClick()
-  }
 
   return (
     <button
-      onPointerDown={handlePointerDown}
-      onPointerUp={handlePointerUp}
-      onPointerLeave={() => { setPressed(false); pointerStart.current = null }}
+      onTouchStart={() => setPressed(true)}
+      onTouchEnd={() => { setPressed(false); if (navigator.vibrate) navigator.vibrate(30); onClick() }}
+      onTouchCancel={() => setPressed(false)}
+      onClick={onClick}
       className="rounded-3xl flex flex-col items-center justify-center font-bold select-none"
       style={{
         background: color,
@@ -66,6 +48,7 @@ function ActionButton({ children, color, onClick }) {
         WebkitTapHighlightColor: 'transparent',
         transform: pressed ? 'scale(0.93)' : 'scale(1)',
         transition: 'transform 0.08s',
+        touchAction: 'manipulation',
       }}
     >
       <div className="flex flex-col items-center justify-center gap-0.5" style={{ pointerEvents: 'none' }}>
