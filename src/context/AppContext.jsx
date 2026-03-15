@@ -69,7 +69,11 @@ export function AppProvider({ children }) {
       .insert({ family_id: FAMILY_ID, logged_by_name: userName, ...entryData })
       .select()
       .single()
-    if (error) { console.error(error); return null }
+    if (error) {
+      console.error(error)
+      alert('Failed to save: ' + (error.message || JSON.stringify(error)))
+      return null
+    }
     // Update local state immediately — don't wait for realtime
     setEntries(prev => prev.find(e => e.id === data.id) ? prev : [data, ...prev])
     return data
