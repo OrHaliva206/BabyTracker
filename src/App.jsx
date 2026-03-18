@@ -3,6 +3,7 @@ import { AppProvider, useApp } from './context/AppContext'
 import { useRealtime } from './hooks/useRealtime'
 import ActionScreen from './screens/ActionScreen'
 import SummaryScreen from './screens/SummaryScreen'
+import TodoScreen from './screens/TodoScreen'
 import SettingsSheet from './components/SettingsSheet'
 
 function NameScreen() {
@@ -50,6 +51,7 @@ function TabBar({ active, onChange }) {
       {[
         { id: 'action', icon: '🍼', label: 'Track' },
         { id: 'summary', icon: '📊', label: 'Summary' },
+        { id: 'todo', icon: '📝', label: 'TDL' },
       ].map(tab => (
         <button
           key={tab.id}
@@ -96,6 +98,11 @@ function MainApp() {
         {tab === 'summary' && (
           <div className="absolute inset-0 overflow-y-auto">
             <SummaryScreen />
+          </div>
+        )}
+        {tab === 'todo' && (
+          <div className="absolute inset-0 overflow-y-auto">
+            <TodoScreen />
           </div>
         )}
       </div>
