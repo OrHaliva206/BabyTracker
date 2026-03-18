@@ -8,17 +8,20 @@ function TodoItem({ item, onDelete }) {
   const [offsetX, setOffsetX] = useState(0)
   const [isDragging, setIsDragging] = useState(false)
   const startXRef = useRef(null)
+  const baseOffsetRef = useRef(0)
   const itemRef = useRef(null)
 
   const handleTouchStart = (e) => {
     startXRef.current = e.touches[0].clientX
+    baseOffsetRef.current = offsetX  // remember where we started (0 or -100)
     setIsDragging(true)
   }
 
   const handleTouchMove = (e) => {
     if (startXRef.current === null) return
     const dx = e.touches[0].clientX - startXRef.current
-    if (dx < 0) setOffsetX(Math.max(dx, -100))
+    const next = Math.min(0, Math.max(-100, baseOffsetRef.current + dx))
+    setOffsetX(next)
   }
 
   const handleTouchEnd = () => {
@@ -26,7 +29,7 @@ function TodoItem({ item, onDelete }) {
     if (offsetX < -SWIPE_THRESHOLD) {
       setOffsetX(-100) // snap open
     } else {
-      setOffsetX(0)   // snap closed
+      setOffsetX(0)    // snap closed
     }
     startXRef.current = null
   }
